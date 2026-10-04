@@ -114,10 +114,10 @@ myhtopheaders = \
 	DynamicMeter.h \
 	DynamicScreen.h \
 	EnvScreen.h \
+	FanMeter.h \
 	FileDescriptorMeter.h \
 	FunctionBar.h \
 	GPUMeter.h \
-	FanMeter.h \
 	Hashtable.h \
 	Header.h \
 	HeaderLayout.h \
@@ -214,8 +214,8 @@ linux_platform_headers = \
 	zfs/ZfsCompressedArcMeter.h
 
 linux_platform_sources = \
-	GPUMeter.c \
 	FanMeter.c \
+	GPUMeter.c \
 	generic/gettime.c \
 	generic/hostname.c \
 	generic/uname.c \

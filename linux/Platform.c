@@ -443,11 +443,11 @@ void Platform_setGPUValues(Meter* this, double* totalUsage, unsigned long long* 
    this->values[residueIndex] = residuePercentage;
 }
 
-static int Platform_getFanSpeedFromHwmonDevice(int parent_dfd, char const* hwmon_device) {
+static int Platform_getFanSpeedFromHwmonDevice(int parent_dfd, const char *hwmon_device) {
    DIR* dirp;
    int dfd;
 
-   dfd = openat(parent_dfd, hwmon_device, O_RDONLY | O_CLOEXEC | O_DIRECTORY);
+   dfd = Compat_openat(parent_dfd, hwmon_device, O_RDONLY | O_CLOEXEC | O_DIRECTORY);
    if (dfd == -1)
       return -1;
 
@@ -463,22 +463,15 @@ static int Platform_getFanSpeedFromHwmonDevice(int parent_dfd, char const* hwmon
       if (sscanf(dir->d_name, "fan%d_input", &fan_num) != 1)
          continue;
 
-      int fd = openat(dfd, dir->d_name, O_RDONLY | O_CLOEXEC);
-      if (fd == -1)
+      char buffer[32];
+      ssize_t ret = Compat_readfileat(dfd, dir->d_name, buffer, sizeof(buffer));
+      if (ret <= 0 || (size_t)ret > sizeof(buffer))
          continue;
-      FILE* fp = fdopen(fd, "r");
-      if (!fp) {
-         close(fd);
-         continue;
-      }
 
       int fan_speed;
-      if (fscanf(fp, "%d", &fan_speed) != 1) {
-         fclose(fp);
+      if (sscanf(buffer, "%d", &fan_speed) != 1)
          continue;
-      }
 
-      fclose(fp);
       closedir(dirp);
       return fan_speed;
    }
@@ -487,10 +480,7 @@ static int Platform_getFanSpeedFromHwmonDevice(int parent_dfd, char const* hwmon
    return -1;
 }
 
-/*
-Traverse hwmon sensors, find first fan, read and return its speed.
-Returns -1 on failure.
-*/
+/* Traverse hwmon sensors, find first fan, read and return its speed. */
 int Platform_getFanSpeed(void) {
    DIR* dirp;
    int dfd;
